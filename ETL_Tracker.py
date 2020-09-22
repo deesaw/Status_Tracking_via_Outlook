@@ -4,17 +4,29 @@ import pandas as pd
 import glob
 import re
 
-def searchword(e,d):
-     if re.search(str(d), e.lower()):
-         if(str(d)=='8807'):
-             print(str(d)+":"+str(e))
+def searchword(str(e).lower(),str(d).lower()):
+    e = re.sub('[^a-zA-Z0-9]',' ',e)  
+    d = re.sub('[^a-zA-Z0-9]',' ',str(d))  
+    s = e.split(" ") 
+    if re.search(str(d), e.lower()):
+        return True
+    else:
+        for i in s: 
+            if (i.strip() == str(d).strip()) or (str(d).strip() in i.strip()):
+                return True
+        return False
+def searchword1(str(e).lower(),str(d).lower()):
+     e = re.sub('[^a-zA-Z0-9]',' ',e)  
+     d = re.sub('[^a-zA-Z0-9]',' ',str(d)) 
+     d1=d+'$'
+     s = e.split(" ")
+     if re.search(d1, e.lower()):
          return True
-     return False
-def searchword1(e,d):
-     d=d+'$'
-     if re.search(d, e.lower()):
-         return True
-     return False
+     else:
+        for i in s: 
+            if (i.strip() == str(d).strip()) or (str(d).strip() in i.strip()):
+                return True
+        return False
 
 myFiles = glob.glob('*.xlsx')
 for file in myFiles:
@@ -36,7 +48,7 @@ email_subject = []
 
 for x in messages:
     sub = x.Subject
-    PCOOO='Production Cutover Green-Light Task UID'
+    PCOOO='Task UID'
     if PCOOO in sub:
         email_subject.append(sub)
         
@@ -45,11 +57,13 @@ df['#issue']=None
 df['#done']=None
 df['There']=None
 
+df['UID']=df.apply(lambda x : re.sub('[^0-9]','',str(x['UID'])),axis=1)
 for d in df['UID']:
     print(d)
     for e in email_subject:
         s=searchword(e,d) 
 #        print(str(d)+":"+str(e)+":"+str(s)+":"+str(start)+":"+str(issue)+":"+str(done))
+        
         df.loc[df['UID']==d,'There']=s          
         if s is True:
             done=searchword1(e.lower(),'#done')#re.search('#done$', e.lower())
@@ -58,9 +72,12 @@ for d in df['UID']:
             df.loc[df['UID']==d,'#start']=start
             df.loc[df['UID']==d,'#issue']=issue
             df.loc[df['UID']==d,'#done']=done
+            
 
-df['Tag Status']=df.apply(lambda x :  '#done' if (x['#done']) else('#issue' if x['#issue'] else('#start' if x['#start'] else ('Received' if x['There'] else 'Yet to receive'))) ,axis=1)
+df['Tag Status']=df.apply(lambda x :  '#done' if (x['#done'] is True) else('#issue' if x['#issue'] else('#start' if x['#start'] else ('Received' if x['There'] else 'Yet to receive'))) ,axis=1)
 #df=df.iloc[:,1:]
+#df=df.iloc[:,1:]
+
 df.to_excel(file, sheet_name='ETL_Tracker', engine='xlsxwriter',index=False)
 
 
